@@ -1,0 +1,1 @@
+# Switchbot-ESPHome-Component
