@@ -1,10 +1,3 @@
-// switchbot_curtain.cpp
-//
-// This file implements the core logic of the SwitchbotCurtain component. Currently the code
-// serves as a scaffold and placeholder. It logs when commands would be sent and updates
-// state based on advertisements. Further development is required to implement actual BLE
-// connections, command writes, and advertisement parsing.
-
 #include "switchbot_curtain.h"
 #include "esphome/core/log.h"
 
@@ -13,8 +6,6 @@ namespace switchbot_curtain {
 
 static const char *const TAG = "switchbot_curtain";
 
-// Predefined command payloads for basic curtain control. These are examples taken from
-// SwitchBot Curtain protocol documentation. Additional commands and variants can be added.
 static const uint8_t CMD_OPEN[] = {0x57, 0x0F, 0x45, 0x01, 0x01, 0x01, 0x00};
 static const uint8_t CMD_CLOSE[] = {0x57, 0x0F, 0x45, 0x01, 0x01, 0x01, 0x64};
 static const uint8_t CMD_STOP[] = {0x57, 0x0F, 0x45, 0x01, 0x00, 0x01};
@@ -39,7 +30,6 @@ bool SwitchbotCurtain::matches_(const esp32_ble_tracker::ESPBTDevice &device) co
 }
 
 bool SwitchbotCurtain::parse_device(const esp32_ble_tracker::ESPBTDevice &device) {
-  // Check if the advertisement originates from this curtain device
   if (!this->matches_(device)) {
     return false;
   }
@@ -50,20 +40,15 @@ bool SwitchbotCurtain::parse_device(const esp32_ble_tracker::ESPBTDevice &device
 }
 
 void SwitchbotCurtain::update_from_advertisement_(const esp32_ble_tracker::ESPBTDevice &device) {
-  // Placeholder: parse advertisement data here. Real implementation should extract:
-  // - current position
-  // - battery level
-  // - motion state (opening/closing)
-  // For now we simply log the receipt and publish cached state if available.
-
   ESP_LOGD(TAG, "Advertisement received for curtain device");
 
-  // Publish battery level if a sensor is present
+  // Placeholder for future parsing of advertisement data.
+  // This is where battery %, position, and motion state should be extracted.
+
   if (this->battery_sensor_ != nullptr) {
-    // Example: battery_sensor_->publish_state(parsed_battery);
+    // this->battery_sensor_->publish_state(parsed_battery);
   }
 
-  // If we have a position, publish state to update Home Assistant
   if (this->has_position_) {
     this->publish_state();
   }
@@ -71,6 +56,7 @@ void SwitchbotCurtain::update_from_advertisement_(const esp32_ble_tracker::ESPBT
 
 void SwitchbotCurtain::publish_position_(float position) {
   this->position = position;
+  this->current_position_ = position;
   this->has_position_ = true;
   this->publish_state();
 }
@@ -130,9 +116,9 @@ void SwitchbotCurtain::handle_position_(float position) {
 
   std::vector<uint8_t> payload = {0x57, 0x0F, 0x45, 0x01, 0x01, 0x01, raw_position};
 
-  if (position > this->position) {
+  if (position > this->current_position_) {
     this->publish_operation_(cover::COVER_OPERATION_OPENING);
-  } else if (position < this->position) {
+  } else if (position < this->current_position_) {
     this->publish_operation_(cover::COVER_OPERATION_CLOSING);
   }
 
@@ -140,9 +126,8 @@ void SwitchbotCurtain::handle_position_(float position) {
 }
 
 bool SwitchbotCurtain::send_command_(const std::vector<uint8_t> &payload) {
-  // Placeholder: implement BLE connection and command write here. For now just log.
-  ESP_LOGW(TAG, "BLE command send not implemented yet; payload size=%u", static_cast<unsigned int>(payload.size()));
-  // Return false to indicate the command was not actually sent
+  ESP_LOGW(TAG, "BLE command send not implemented yet; payload size=%u",
+           static_cast<unsigned int>(payload.size()));
   return false;
 }
 
