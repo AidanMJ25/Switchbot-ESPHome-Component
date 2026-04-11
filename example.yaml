@@ -34,8 +34,12 @@ cover:
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
     mac_address: "F6:68:4A:2F:D3:FD"
+    battery:
+      name: "Left Bedroom Curtain Battery"
 
   - platform: switchbot_curtain
     id: right_bedroom_curtain
     name: "Right Bedroom Curtain"
     mac_address: "F5:BC:53:44:13:E1"
+    battery:
+      name: "Right Bedroom Curtain Battery"
