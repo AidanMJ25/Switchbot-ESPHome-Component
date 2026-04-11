@@ -73,17 +73,14 @@ void SwitchbotCurtain::control(const cover::CoverCall &call) {
   }
 
   if (call.get_position().has_value()) {
-    this->handle_position_(*call.get_position());
-    return;
-  }
-
-  if (call.get_command_open()) {
-    this->handle_open_();
-    return;
-  }
-
-  if (call.get_command_close()) {
-    this->handle_close_();
+    const float position = *call.get_position();
+    if (position <= cover::COVER_CLOSED) {
+      this->handle_close_();
+    } else if (position >= cover::COVER_OPEN) {
+      this->handle_open_();
+    } else {
+      this->handle_position_(position);
+    }
     return;
   }
 }
