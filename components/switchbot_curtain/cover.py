@@ -8,7 +8,7 @@ from esphome.const import (
 )
 
 AUTO_LOAD = ["esp32_ble_tracker", "sensor"]
-DEPENDENCIES = ["esp32"]
+DEPENDENCIES = ["esp32_ble_tracker"]
 
 CONF_REVERSE_MODE = "reverse_mode"
 CONF_COMMAND_STATE_TIMEOUT = "command_state_timeout"
@@ -37,7 +37,7 @@ CONFIG_SCHEMA = cover._COVER_SCHEMA.extend(
             state_class="measurement",
         ),
     }
-).extend(cv.COMPONENT_SCHEMA)
+).extend(cv.COMPONENT_SCHEMA).extend(esp32_ble_tracker.ESP_BLE_DEVICE_SCHEMA)
 
 
 async def to_code(config):
