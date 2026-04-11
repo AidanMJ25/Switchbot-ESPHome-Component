@@ -1,13 +1,13 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 
-from esphome.components import cover, esp32_ble_tracker, sensor
+from esphome.components import cover, esp32_ble_client, esp32_ble_tracker, sensor
 from esphome.const import (
     CONF_ID,
     CONF_MAC_ADDRESS,
 )
 
-AUTO_LOAD = ["esp32_ble_tracker", "sensor"]
+AUTO_LOAD = ["esp32_ble_client", "sensor"]
 DEPENDENCIES = ["esp32_ble_tracker"]
 
 CONF_REVERSE_MODE = "reverse_mode"
@@ -18,8 +18,7 @@ switchbot_curtain_ns = cg.esphome_ns.namespace("switchbot_curtain")
 SwitchbotCurtain = switchbot_curtain_ns.class_(
     "SwitchbotCurtain",
     cover.Cover,
-    cg.Component,
-    esp32_ble_tracker.ESPBTDeviceListener,
+    esp32_ble_client.BLEClientBase,
 )
 
 CONFIG_SCHEMA = cover._COVER_SCHEMA.extend(
@@ -41,10 +40,15 @@ CONFIG_SCHEMA = cover._COVER_SCHEMA.extend(
 
 
 async def to_code(config):
+    cg.add_define("USE_ESP32_BLE_UUID")
+    esp32_ble_tracker.register_ble_features(
+        {esp32_ble_tracker.BLEFeatures.ESP_BT_DEVICE}
+    )
+
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await cover.register_cover(var, config)
-    await esp32_ble_tracker.register_ble_device(var, config)
+    await esp32_ble_tracker.register_client(var, config)
 
     cg.add(var.set_address(config[CONF_MAC_ADDRESS].as_hex))
     cg.add(var.set_reverse_mode(config[CONF_REVERSE_MODE]))
