@@ -27,52 +27,44 @@ CONF_CALIBRATION = "calibration"
 CONF_DIAGNOSTICS = "diagnostics"
 
 switchbot_curtain_ns = cg.esphome_ns.namespace("switchbot_curtain")
-BATTERY_SCHEMA = cv.Any(
-    cv.boolean,
-    cv.maybe_simple_value(
-        sensor.sensor_schema(
-            unit_of_measurement="%",
-            accuracy_decimals=0,
-            device_class="battery",
-            state_class="measurement",
-            entity_category="diagnostic",
-        ),
-        key=CONF_NAME,
+BATTERY_CONFIG_VALIDATOR = cv.maybe_simple_value(
+    sensor.sensor_schema(
+        unit_of_measurement="%",
+        accuracy_decimals=0,
+        device_class="battery",
+        state_class="measurement",
+        entity_category="diagnostic",
     ),
+    key=CONF_NAME,
 )
+BATTERY_SCHEMA = cv.Any(cv.boolean, BATTERY_CONFIG_VALIDATOR)
 
-LIGHT_LEVEL_SCHEMA = cv.Any(
-    cv.boolean,
-    cv.maybe_simple_value(
-        sensor.sensor_schema(
-            accuracy_decimals=0,
-            state_class="measurement",
-            entity_category="diagnostic",
-        ),
-        key=CONF_NAME,
+LIGHT_LEVEL_CONFIG_VALIDATOR = cv.maybe_simple_value(
+    sensor.sensor_schema(
+        accuracy_decimals=0,
+        state_class="measurement",
+        entity_category="diagnostic",
     ),
+    key=CONF_NAME,
 )
+LIGHT_LEVEL_SCHEMA = cv.Any(cv.boolean, LIGHT_LEVEL_CONFIG_VALIDATOR)
 
-RSSI_SCHEMA = cv.Any(
-    cv.boolean,
-    cv.maybe_simple_value(
-        sensor.sensor_schema(
-            unit_of_measurement="dBm",
-            accuracy_decimals=0,
-            state_class="measurement",
-            entity_category="diagnostic",
-        ),
-        key=CONF_NAME,
+RSSI_CONFIG_VALIDATOR = cv.maybe_simple_value(
+    sensor.sensor_schema(
+        unit_of_measurement="dBm",
+        accuracy_decimals=0,
+        state_class="measurement",
+        entity_category="diagnostic",
     ),
+    key=CONF_NAME,
 )
+RSSI_SCHEMA = cv.Any(cv.boolean, RSSI_CONFIG_VALIDATOR)
 
-CALIBRATION_SCHEMA = cv.Any(
-    cv.boolean,
-    cv.maybe_simple_value(
-        binary_sensor.binary_sensor_schema(entity_category="diagnostic"),
-        key=CONF_NAME,
-    ),
+CALIBRATION_CONFIG_VALIDATOR = cv.maybe_simple_value(
+    binary_sensor.binary_sensor_schema(entity_category="diagnostic"),
+    key=CONF_NAME,
 )
+CALIBRATION_SCHEMA = cv.Any(cv.boolean, CALIBRATION_CONFIG_VALIDATOR)
 
 DIAGNOSTICS_SCHEMA = cv.Any(
     cv.boolean,
@@ -126,7 +118,14 @@ def _normalize_diagnostics(config):
         if isinstance(value, dict):
             if diagnostics_device_id is not None and CONF_DEVICE_ID not in value:
                 value[CONF_DEVICE_ID] = diagnostics_device_id
-            config[key] = value
+            if key == CONF_BATTERY:
+                config[key] = BATTERY_CONFIG_VALIDATOR(value)
+            elif key == CONF_LIGHT_LEVEL:
+                config[key] = LIGHT_LEVEL_CONFIG_VALIDATOR(value)
+            elif key == CONF_RSSI:
+                config[key] = RSSI_CONFIG_VALIDATOR(value)
+            elif key == CONF_CALIBRATION:
+                config[key] = CALIBRATION_CONFIG_VALIDATOR(value)
 
     return config
 
