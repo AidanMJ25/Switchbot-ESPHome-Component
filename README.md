@@ -27,7 +27,7 @@ cover:
     device_id: left_curtain_device
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
-    mac_address: "F6:68:4A:2F:D3:FD"
+    mac_address: "AA:BB:CC:DD:EE:FF"
 ```
 
 ## Notes
