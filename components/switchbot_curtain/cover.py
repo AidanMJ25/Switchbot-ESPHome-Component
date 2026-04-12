@@ -9,8 +9,10 @@ from esphome.components import (
     sensor,
 )
 from esphome.const import (
+    CONF_DEVICE_ID,
     CONF_ID,
     CONF_MAC_ADDRESS,
+    CONF_NAME,
 )
 
 AUTO_LOAD = ["esp32_ble_client", "sensor", "binary_sensor"]
@@ -22,40 +24,139 @@ CONF_BATTERY = "battery"
 CONF_LIGHT_LEVEL = "light_level"
 CONF_RSSI = "rssi"
 CONF_CALIBRATION = "calibration"
+CONF_DIAGNOSTICS = "diagnostics"
 
 switchbot_curtain_ns = cg.esphome_ns.namespace("switchbot_curtain")
+BATTERY_SCHEMA = cv.Any(
+    cv.boolean,
+    cv.maybe_simple_value(
+        sensor.sensor_schema(
+            unit_of_measurement="%",
+            accuracy_decimals=0,
+            device_class="battery",
+            state_class="measurement",
+            entity_category="diagnostic",
+        ),
+        key=CONF_NAME,
+    ),
+)
+
+LIGHT_LEVEL_SCHEMA = cv.Any(
+    cv.boolean,
+    cv.maybe_simple_value(
+        sensor.sensor_schema(
+            accuracy_decimals=0,
+            state_class="measurement",
+            entity_category="diagnostic",
+        ),
+        key=CONF_NAME,
+    ),
+)
+
+RSSI_SCHEMA = cv.Any(
+    cv.boolean,
+    cv.maybe_simple_value(
+        sensor.sensor_schema(
+            unit_of_measurement="dBm",
+            accuracy_decimals=0,
+            state_class="measurement",
+            entity_category="diagnostic",
+        ),
+        key=CONF_NAME,
+    ),
+)
+
+CALIBRATION_SCHEMA = cv.Any(
+    cv.boolean,
+    cv.maybe_simple_value(
+        binary_sensor.binary_sensor_schema(entity_category="diagnostic"),
+        key=CONF_NAME,
+    ),
+)
+
+DIAGNOSTICS_SCHEMA = cv.Any(
+    cv.boolean,
+    cv.Schema(
+        {
+            cv.Optional(CONF_DEVICE_ID): cv.sub_device_id,
+            cv.Optional(CONF_BATTERY, default=True): cv.boolean,
+            cv.Optional(CONF_LIGHT_LEVEL, default=True): cv.boolean,
+            cv.Optional(CONF_RSSI, default=True): cv.boolean,
+            cv.Optional(CONF_CALIBRATION, default=True): cv.boolean,
+        }
+    ),
+)
+
+
+def _normalize_diagnostics(config):
+    config = dict(config)
+    cover_name = config.get(CONF_NAME, "Curtain")
+    diagnostics = config.pop(CONF_DIAGNOSTICS, None)
+    default_device_id = config.get(CONF_DEVICE_ID)
+    diagnostics_device_id = default_device_id
+
+    diagnostics_defaults = None
+    if diagnostics is True:
+        diagnostics_defaults = {
+            CONF_BATTERY: True,
+            CONF_LIGHT_LEVEL: True,
+            CONF_RSSI: True,
+            CONF_CALIBRATION: True,
+        }
+    elif isinstance(diagnostics, dict):
+        diagnostics_device_id = diagnostics.get(CONF_DEVICE_ID, default_device_id)
+        diagnostics_defaults = diagnostics
+
+    for key, suffix in (
+        (CONF_BATTERY, "Battery"),
+        (CONF_LIGHT_LEVEL, "Light Level"),
+        (CONF_RSSI, "RSSI"),
+        (CONF_CALIBRATION, "Calibrated"),
+    ):
+        value = config.get(key)
+        if value is False:
+            config.pop(key, None)
+            continue
+
+        if value is True:
+            value = {CONF_NAME: f"{cover_name} {suffix}"}
+        elif value is None and diagnostics_defaults and diagnostics_defaults.get(key):
+            value = {CONF_NAME: f"{cover_name} {suffix}"}
+
+        if isinstance(value, dict):
+            if diagnostics_device_id is not None and CONF_DEVICE_ID not in value:
+                value[CONF_DEVICE_ID] = diagnostics_device_id
+            config[key] = value
+
+    return config
+
+
 SwitchbotCurtain = switchbot_curtain_ns.class_(
     "SwitchbotCurtain",
     cover.Cover,
     esp32_ble_client.BLEClientBase,
 )
 
-CONFIG_SCHEMA = cover._COVER_SCHEMA.extend(
-    {
-        cv.GenerateID(): cv.declare_id(SwitchbotCurtain),
-        cv.Required(CONF_MAC_ADDRESS): cv.mac_address,
-        cv.Optional(CONF_REVERSE_MODE, default=True): cv.boolean,
-        cv.Optional(
-            CONF_COMMAND_STATE_TIMEOUT, default="5s"
-        ): cv.positive_time_period_milliseconds,
-        cv.Optional(CONF_BATTERY): sensor.sensor_schema(
-            unit_of_measurement="%",
-            accuracy_decimals=0,
-            device_class="battery",
-            state_class="measurement",
-        ),
-        cv.Optional(CONF_LIGHT_LEVEL): sensor.sensor_schema(
-            accuracy_decimals=0,
-            state_class="measurement",
-        ),
-        cv.Optional(CONF_RSSI): sensor.sensor_schema(
-            unit_of_measurement="dBm",
-            accuracy_decimals=0,
-            state_class="measurement",
-        ),
-        cv.Optional(CONF_CALIBRATION): binary_sensor.binary_sensor_schema(),
-    }
-).extend(cv.COMPONENT_SCHEMA).extend(esp32_ble_tracker.ESP_BLE_DEVICE_SCHEMA)
+CONFIG_SCHEMA = cv.All(
+    cover._COVER_SCHEMA.extend(
+        {
+            cv.GenerateID(): cv.declare_id(SwitchbotCurtain),
+            cv.Required(CONF_MAC_ADDRESS): cv.mac_address,
+            cv.Optional(CONF_REVERSE_MODE, default=True): cv.boolean,
+            cv.Optional(
+                CONF_COMMAND_STATE_TIMEOUT, default="5s"
+            ): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_BATTERY): BATTERY_SCHEMA,
+            cv.Optional(CONF_LIGHT_LEVEL): LIGHT_LEVEL_SCHEMA,
+            cv.Optional(CONF_RSSI): RSSI_SCHEMA,
+            cv.Optional(CONF_CALIBRATION): CALIBRATION_SCHEMA,
+            cv.Optional(CONF_DIAGNOSTICS, default=True): DIAGNOSTICS_SCHEMA,
+        }
+    )
+    .extend(cv.COMPONENT_SCHEMA)
+    .extend(esp32_ble_tracker.ESP_BLE_DEVICE_SCHEMA),
+    _normalize_diagnostics,
+)
 
 
 async def to_code(config):
