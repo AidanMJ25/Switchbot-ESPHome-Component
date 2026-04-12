@@ -28,13 +28,13 @@ cover:
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
     mac_address: "F6:68:4A:2F:D3:FD"
-    diagnostics: true
 ```
 
 ## Notes
 
 - `mac_address` is required.
-- `diagnostics: true` auto-creates `battery`, `rssi`, `light_level`, and `calibration` entities with default names on the same curtain device.
+- Diagnostics are enabled by default and auto-create `battery`, `rssi`, `light_level`, and `calibration` entities with default names on the same curtain device.
+- Set `diagnostics: false` if you want to disable all of them.
 - You can still configure `battery`, `rssi`, `light_level`, or `calibration` individually if you want explicit names or selective exposure.
 - For Home Assistant device grouping, declare ESPHome `devices:` and assign `device_id` so each curtain appears as its own device instead of attaching battery entities to the USB-powered ESP32 hub.
 - The component relies on `esp32_ble_tracker` to see advertisements for state and battery updates.
