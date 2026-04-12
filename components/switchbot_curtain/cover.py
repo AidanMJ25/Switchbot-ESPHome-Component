@@ -13,7 +13,7 @@ from esphome.const import (
     CONF_MAC_ADDRESS,
 )
 
-AUTO_LOAD = ["esp32_ble_client", "sensor"]
+AUTO_LOAD = ["esp32_ble_client", "sensor", "binary_sensor"]
 DEPENDENCIES = ["esp32_ble_tracker"]
 
 CONF_REVERSE_MODE = "reverse_mode"
