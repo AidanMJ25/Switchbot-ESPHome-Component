@@ -1,6 +1,11 @@
 esphome:
   name: esphome-switchbot-hub
   friendly_name: ESPHome SwitchBot Hub
+  devices:
+    - id: left_curtain_device
+      name: "Left Bedroom Curtain"
+    - id: right_curtain_device
+      name: "Right Bedroom Curtain"
 
 esp32:
   board: esp32dev
@@ -31,15 +36,19 @@ external_components:
 
 cover:
   - platform: switchbot_curtain
+    device_id: left_curtain_device
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
     mac_address: "F6:68:4A:2F:D3:FD"
     battery:
       name: "Left Bedroom Curtain Battery"
+      device_id: left_curtain_device
 
   - platform: switchbot_curtain
+    device_id: right_curtain_device
     id: right_bedroom_curtain
     name: "Right Bedroom Curtain"
     mac_address: "F5:BC:53:44:13:E1"
     battery:
       name: "Right Bedroom Curtain Battery"
+      device_id: right_curtain_device
