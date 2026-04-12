@@ -1,7 +1,13 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 
-from esphome.components import cover, esp32_ble_client, esp32_ble_tracker, sensor
+from esphome.components import (
+    binary_sensor,
+    cover,
+    esp32_ble_client,
+    esp32_ble_tracker,
+    sensor,
+)
 from esphome.const import (
     CONF_ID,
     CONF_MAC_ADDRESS,
@@ -13,6 +19,9 @@ DEPENDENCIES = ["esp32_ble_tracker"]
 CONF_REVERSE_MODE = "reverse_mode"
 CONF_COMMAND_STATE_TIMEOUT = "command_state_timeout"
 CONF_BATTERY = "battery"
+CONF_LIGHT_LEVEL = "light_level"
+CONF_RSSI = "rssi"
+CONF_CALIBRATION = "calibration"
 
 switchbot_curtain_ns = cg.esphome_ns.namespace("switchbot_curtain")
 SwitchbotCurtain = switchbot_curtain_ns.class_(
@@ -35,6 +44,16 @@ CONFIG_SCHEMA = cover._COVER_SCHEMA.extend(
             device_class="battery",
             state_class="measurement",
         ),
+        cv.Optional(CONF_LIGHT_LEVEL): sensor.sensor_schema(
+            accuracy_decimals=0,
+            state_class="measurement",
+        ),
+        cv.Optional(CONF_RSSI): sensor.sensor_schema(
+            unit_of_measurement="dBm",
+            accuracy_decimals=0,
+            state_class="measurement",
+        ),
+        cv.Optional(CONF_CALIBRATION): binary_sensor.binary_sensor_schema(),
     }
 ).extend(cv.COMPONENT_SCHEMA).extend(esp32_ble_tracker.ESP_BLE_DEVICE_SCHEMA)
 
@@ -57,3 +76,15 @@ async def to_code(config):
     if CONF_BATTERY in config:
         sens = await sensor.new_sensor(config[CONF_BATTERY])
         cg.add(var.set_battery_sensor(sens))
+
+    if CONF_LIGHT_LEVEL in config:
+        sens = await sensor.new_sensor(config[CONF_LIGHT_LEVEL])
+        cg.add(var.set_light_level_sensor(sens))
+
+    if CONF_RSSI in config:
+        sens = await sensor.new_sensor(config[CONF_RSSI])
+        cg.add(var.set_rssi_sensor(sens))
+
+    if CONF_CALIBRATION in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_CALIBRATION])
+        cg.add(var.set_calibration_binary_sensor(sens))

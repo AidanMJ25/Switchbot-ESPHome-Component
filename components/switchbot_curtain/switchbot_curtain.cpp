@@ -267,8 +267,18 @@ bool SwitchbotCurtain::send_pending_command_() {
 }
 
 void SwitchbotCurtain::update_from_advertisement_(const esp32_ble_tracker::ESPBTDevice &device) {
+  if (this->rssi_sensor_ != nullptr) {
+    this->rssi_sensor_->publish_state(device.get_rssi());
+  }
+
   for (const auto &service_data : device.get_service_datas()) {
     if (this->parse_switchbot_service_data_(service_data)) {
+      return;
+    }
+  }
+
+  for (const auto &manufacturer_data : device.get_manufacturer_datas()) {
+    if (this->parse_switchbot_manufacturer_data_(manufacturer_data)) {
       return;
     }
   }
@@ -281,19 +291,51 @@ bool SwitchbotCurtain::parse_switchbot_service_data_(const esp32_ble_tracker::Se
     return false;
   }
 
-  if ((service_data.data[0] & 0x7F) != 'c') {
+  const uint8_t model = service_data.data[0] & 0x7F;
+  if (model != 'c' && model != 'C' && model != '{' && model != '[') {
     return false;
   }
 
   const bool in_motion = (service_data.data[3] & 0x80) != 0;
-  const float previous_position = this->current_position_;
   const int raw_position = clamp<int>(service_data.data[3] & 0x7F, 0, 100);
+  const float battery = service_data.data[2] & 0x7F;
+  const int light_level = (service_data.data[4] >> 4) & 0x0F;
+  const bool calibration = (service_data.data[1] & 0x40) != 0;
+
+  return this->apply_curtain_data_(in_motion, raw_position, battery, light_level, calibration);
+}
+
+bool SwitchbotCurtain::parse_switchbot_manufacturer_data_(const esp32_ble_tracker::ServiceData &manufacturer_data) {
+  if (manufacturer_data.data.size() < 11) {
+    return false;
+  }
+
+  const uint8_t *device_data = manufacturer_data.data.data() + 8;
+  const bool in_motion = (device_data[0] & 0x80) != 0;
+  const int raw_position = clamp<int>(device_data[0] & 0x7F, 0, 100);
+  const int light_level = (device_data[1] >> 4) & 0x0F;
+  optional<float> battery{};
+  if (manufacturer_data.data.size() > 12) {
+    battery = static_cast<float>(manufacturer_data.data[12] & 0x7F);
+  }
+
+  return this->apply_curtain_data_(in_motion, raw_position, battery, light_level, {});
+}
+
+bool SwitchbotCurtain::apply_curtain_data_(bool in_motion, int raw_position, optional<float> battery,
+                                           optional<int> light_level, optional<bool> calibration) {
+  const float previous_position = this->current_position_;
   const int curtain_position = this->reverse_mode_ ? 100 - raw_position : raw_position;
   const float cover_position = curtain_position / 100.0f;
-  const float battery = service_data.data[2] & 0x7F;
 
-  if (this->battery_sensor_ != nullptr) {
-    this->battery_sensor_->publish_state(battery);
+  if (battery.has_value() && this->battery_sensor_ != nullptr) {
+    this->battery_sensor_->publish_state(*battery);
+  }
+  if (light_level.has_value() && this->light_level_sensor_ != nullptr) {
+    this->light_level_sensor_->publish_state(*light_level);
+  }
+  if (calibration.has_value() && this->calibration_binary_sensor_ != nullptr) {
+    this->calibration_binary_sensor_->publish_state(*calibration);
   }
 
   this->position = cover_position;
@@ -311,8 +353,11 @@ bool SwitchbotCurtain::parse_switchbot_service_data_(const esp32_ble_tracker::Se
   }
 
   this->publish_state(false);
-  ESP_LOGD(TAG, "Advertisement update: position=%.0f%% battery=%.0f%% moving=%s", cover_position * 100.0f, battery,
-           TRUEFALSE(in_motion));
+  const int battery_value = battery.has_value() ? static_cast<int>(*battery) : -1;
+  const int light_value = light_level.has_value() ? *light_level : -1;
+  const int calibration_value = calibration.has_value() ? static_cast<int>(*calibration) : -1;
+  ESP_LOGD(TAG, "Advertisement update: position=%.0f%% battery=%d light=%d calibrated=%d moving=%s",
+           cover_position * 100.0f, battery_value, light_value, calibration_value, TRUEFALSE(in_motion));
   return true;
 }
 

@@ -4,6 +4,7 @@
 
 #include "esphome/components/cover/cover.h"
 #include "esphome/components/esp32_ble_client/ble_client_base.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/core/helpers.h"
 
@@ -15,6 +16,11 @@ class SwitchbotCurtain : public cover::Cover, public esp32_ble_client::BLEClient
   void set_reverse_mode(bool reverse_mode) { this->reverse_mode_ = reverse_mode; }
   void set_command_state_timeout(uint32_t timeout_ms) { this->command_state_timeout_ms_ = timeout_ms; }
   void set_battery_sensor(sensor::Sensor *battery_sensor) { this->battery_sensor_ = battery_sensor; }
+  void set_light_level_sensor(sensor::Sensor *light_level_sensor) { this->light_level_sensor_ = light_level_sensor; }
+  void set_rssi_sensor(sensor::Sensor *rssi_sensor) { this->rssi_sensor_ = rssi_sensor; }
+  void set_calibration_binary_sensor(binary_sensor::BinarySensor *calibration_binary_sensor) {
+    this->calibration_binary_sensor_ = calibration_binary_sensor;
+  }
 
   void setup() override;
   void dump_config() override;
@@ -39,10 +45,16 @@ class SwitchbotCurtain : public cover::Cover, public esp32_ble_client::BLEClient
   bool send_pending_command_();
   void update_from_advertisement_(const esp32_ble_tracker::ESPBTDevice &device);
   bool parse_switchbot_service_data_(const esp32_ble_tracker::ServiceData &service_data);
+  bool parse_switchbot_manufacturer_data_(const esp32_ble_tracker::ServiceData &manufacturer_data);
+  bool apply_curtain_data_(bool in_motion, int raw_position, optional<float> battery, optional<int> light_level,
+                           optional<bool> calibration);
 
   bool reverse_mode_{true};
   uint32_t command_state_timeout_ms_{5000};
   sensor::Sensor *battery_sensor_{nullptr};
+  sensor::Sensor *light_level_sensor_{nullptr};
+  sensor::Sensor *rssi_sensor_{nullptr};
+  binary_sensor::BinarySensor *calibration_binary_sensor_{nullptr};
 
   uint16_t command_handle_{0};
   float current_position_{cover::COVER_OPEN};
