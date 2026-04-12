@@ -11,6 +11,8 @@ esphome:
   devices:
     - id: left_curtain_device
       name: "Left Bedroom Curtain"
+    - id: right_curtain_device
+      name: "Right Bedroom Curtain"
 
 esp32_ble_tracker:
 
@@ -20,13 +22,19 @@ external_components:
       url: https://github.com/AidanMJ25/Switchbot-ESPHome-Component.git
       ref: main
     components: [switchbot_curtain]
-    refresh: 0s
 
 cover:
   - platform: switchbot_curtain
     device_id: left_curtain_device
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
+    mac_address: "AA:BB:CC:DD:EE:FF"
+    
+  - platform: switchbot_curtain
+    device_class: curtain
+    device_id: right_curtain_device
+    id: right_bedroom_curtain
+    name: "Right Bedroom Curtain"
     mac_address: "AA:BB:CC:DD:EE:FF"
 ```
 
