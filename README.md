@@ -25,6 +25,7 @@ external_components:
 
 cover:
   - platform: switchbot_curtain
+    device_class: curtain
     device_id: left_curtain_device
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
