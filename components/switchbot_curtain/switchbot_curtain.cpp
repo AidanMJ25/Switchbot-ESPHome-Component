@@ -326,6 +326,7 @@ bool SwitchbotCurtain::apply_curtain_data_(bool in_motion, int raw_position, opt
                                            optional<int> light_level, optional<bool> calibration) {
   const float previous_position = this->current_position_;
   int curtain_position = this->reverse_mode_ ? 100 - raw_position : raw_position;
+  const int normalized_position = curtain_position;
   if (curtain_position <= 2) {
     curtain_position = 0;
   } else if (curtain_position >= 98) {
@@ -361,8 +362,11 @@ bool SwitchbotCurtain::apply_curtain_data_(bool in_motion, int raw_position, opt
   const int battery_value = battery.has_value() ? static_cast<int>(*battery) : -1;
   const int light_value = light_level.has_value() ? *light_level : -1;
   const int calibration_value = calibration.has_value() ? static_cast<int>(*calibration) : -1;
-  ESP_LOGD(TAG, "Advertisement update: position=%.0f%% battery=%d light=%d calibrated=%d moving=%s",
-           cover_position * 100.0f, battery_value, light_value, calibration_value, TRUEFALSE(in_motion));
+  ESP_LOGD(TAG,
+           "Advertisement update: raw=%d normalized=%d position=%.0f%% reverse=%s battery=%d light=%d "
+           "calibrated=%d moving=%s",
+           raw_position, normalized_position, cover_position * 100.0f, TRUEFALSE(this->reverse_mode_),
+           battery_value, light_value, calibration_value, TRUEFALSE(in_motion));
   return true;
 }
 
