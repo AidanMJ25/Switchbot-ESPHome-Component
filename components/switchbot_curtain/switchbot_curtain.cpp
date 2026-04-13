@@ -326,9 +326,9 @@ bool SwitchbotCurtain::apply_curtain_data_(bool in_motion, int raw_position, opt
                                            optional<int> light_level, optional<bool> calibration) {
   const float previous_position = this->current_position_;
   int curtain_position = this->reverse_mode_ ? 100 - raw_position : raw_position;
-  if (curtain_position <= 1) {
+  if (curtain_position <= 2) {
     curtain_position = 0;
-  } else if (curtain_position >= 99) {
+  } else if (curtain_position >= 98) {
     curtain_position = 100;
   }
   const float cover_position = curtain_position / 100.0f;
