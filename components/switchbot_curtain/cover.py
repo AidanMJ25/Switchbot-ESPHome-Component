@@ -9,6 +9,7 @@ from esphome.components import (
     sensor,
 )
 from esphome.const import (
+    CONF_DEVICE_CLASS,
     CONF_DEVICE_ID,
     CONF_ID,
     CONF_MAC_ADDRESS,
@@ -82,6 +83,7 @@ DIAGNOSTICS_SCHEMA = cv.Any(
 
 def _normalize_diagnostics(config):
     config = dict(config)
+    config.setdefault(CONF_DEVICE_CLASS, "curtain")
     cover_name = config.get(CONF_NAME, "Curtain")
     diagnostics = config.pop(CONF_DIAGNOSTICS, None)
     default_device_id = config.get(CONF_DEVICE_ID)
