@@ -105,9 +105,8 @@ def _normalize_diagnostics(config):
             CONF_LIGHT_LEVEL: True,
             CONF_RSSI: True,
             CONF_CALIBRATION: True,
+            CONF_CHARGING: True,
         }
-        if config.get(CONF_HAS_SOLAR_PANEL):
-            diagnostics_defaults[CONF_CHARGING] = True
     elif isinstance(diagnostics, dict):
         diagnostics_device_id = diagnostics.get(CONF_DEVICE_ID, default_device_id)
         diagnostics_defaults = diagnostics
