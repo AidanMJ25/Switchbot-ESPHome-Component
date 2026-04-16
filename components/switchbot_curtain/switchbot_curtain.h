@@ -21,10 +21,6 @@ class SwitchbotCurtain : public cover::Cover, public esp32_ble_client::BLEClient
   void set_calibration_binary_sensor(binary_sensor::BinarySensor *calibration_binary_sensor) {
     this->calibration_binary_sensor_ = calibration_binary_sensor;
   }
-  void set_charging_binary_sensor(binary_sensor::BinarySensor *charging_binary_sensor) {
-    this->charging_binary_sensor_ = charging_binary_sensor;
-  }
-  void set_has_solar_panel(bool has_solar_panel) { this->has_solar_panel_ = has_solar_panel; }
 
   void setup() override;
   void dump_config() override;
@@ -59,8 +55,6 @@ class SwitchbotCurtain : public cover::Cover, public esp32_ble_client::BLEClient
   sensor::Sensor *light_level_sensor_{nullptr};
   sensor::Sensor *rssi_sensor_{nullptr};
   binary_sensor::BinarySensor *calibration_binary_sensor_{nullptr};
-  binary_sensor::BinarySensor *charging_binary_sensor_{nullptr};
-  bool has_solar_panel_{false};
 
   uint16_t command_handle_{0};
   float current_position_{cover::COVER_OPEN};
