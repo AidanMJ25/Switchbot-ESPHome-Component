@@ -40,11 +40,9 @@ cover:
     id: left_bedroom_curtain
     name: "Left Bedroom Curtain"
     mac_address: "AA:BB:CC:DD:EE:FF"
-    has_solar_panel: true
 
   - platform: switchbot_curtain
     device_id: right_curtain_device
     id: right_bedroom_curtain
     name: "Right Bedroom Curtain"
     mac_address: "11:22:33:44:55:66"
-    has_solar_panel: true

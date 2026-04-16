@@ -165,7 +165,7 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_RSSI): RSSI_SCHEMA,
             cv.Optional(CONF_CALIBRATION): CALIBRATION_SCHEMA,
             cv.Optional(CONF_CHARGING): CHARGING_SCHEMA,
-            cv.Optional(CONF_HAS_SOLAR_PANEL, default=False): cv.boolean,
+            cv.Optional(CONF_HAS_SOLAR_PANEL, default=True): cv.boolean,
             cv.Optional(CONF_DIAGNOSTICS, default=True): DIAGNOSTICS_SCHEMA,
         }
     )
