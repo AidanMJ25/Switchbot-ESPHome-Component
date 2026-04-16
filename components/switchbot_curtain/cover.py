@@ -25,7 +25,9 @@ CONF_BATTERY = "battery"
 CONF_LIGHT_LEVEL = "light_level"
 CONF_RSSI = "rssi"
 CONF_CALIBRATION = "calibration"
+CONF_CHARGING = "charging"
 CONF_DIAGNOSTICS = "diagnostics"
+CONF_HAS_SOLAR_PANEL = "has_solar_panel"
 
 switchbot_curtain_ns = cg.esphome_ns.namespace("switchbot_curtain")
 BATTERY_CONFIG_VALIDATOR = cv.maybe_simple_value(
@@ -67,6 +69,12 @@ CALIBRATION_CONFIG_VALIDATOR = cv.maybe_simple_value(
 )
 CALIBRATION_SCHEMA = cv.Any(cv.boolean, CALIBRATION_CONFIG_VALIDATOR)
 
+CHARGING_CONFIG_VALIDATOR = cv.maybe_simple_value(
+    binary_sensor.binary_sensor_schema(entity_category="diagnostic"),
+    key=CONF_NAME,
+)
+CHARGING_SCHEMA = cv.Any(cv.boolean, CHARGING_CONFIG_VALIDATOR)
+
 DIAGNOSTICS_SCHEMA = cv.Any(
     cv.boolean,
     cv.Schema(
@@ -76,6 +84,7 @@ DIAGNOSTICS_SCHEMA = cv.Any(
             cv.Optional(CONF_LIGHT_LEVEL, default=True): cv.boolean,
             cv.Optional(CONF_RSSI, default=True): cv.boolean,
             cv.Optional(CONF_CALIBRATION, default=True): cv.boolean,
+            cv.Optional(CONF_CHARGING, default=True): cv.boolean,
         }
     ),
 )
@@ -97,6 +106,8 @@ def _normalize_diagnostics(config):
             CONF_RSSI: True,
             CONF_CALIBRATION: True,
         }
+        if config.get(CONF_HAS_SOLAR_PANEL):
+            diagnostics_defaults[CONF_CHARGING] = True
     elif isinstance(diagnostics, dict):
         diagnostics_device_id = diagnostics.get(CONF_DEVICE_ID, default_device_id)
         diagnostics_defaults = diagnostics
@@ -106,6 +117,7 @@ def _normalize_diagnostics(config):
         (CONF_LIGHT_LEVEL, "Light Level"),
         (CONF_RSSI, "RSSI"),
         (CONF_CALIBRATION, "Calibrated"),
+        (CONF_CHARGING, "Charging"),
     ):
         value = config.get(key)
         if value is False:
@@ -128,6 +140,8 @@ def _normalize_diagnostics(config):
                 config[key] = RSSI_CONFIG_VALIDATOR(value)
             elif key == CONF_CALIBRATION:
                 config[key] = CALIBRATION_CONFIG_VALIDATOR(value)
+            elif key == CONF_CHARGING:
+                config[key] = CHARGING_CONFIG_VALIDATOR(value)
 
     return config
 
@@ -151,6 +165,8 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_LIGHT_LEVEL): LIGHT_LEVEL_SCHEMA,
             cv.Optional(CONF_RSSI): RSSI_SCHEMA,
             cv.Optional(CONF_CALIBRATION): CALIBRATION_SCHEMA,
+            cv.Optional(CONF_CHARGING): CHARGING_SCHEMA,
+            cv.Optional(CONF_HAS_SOLAR_PANEL, default=False): cv.boolean,
             cv.Optional(CONF_DIAGNOSTICS, default=True): DIAGNOSTICS_SCHEMA,
         }
     )
@@ -174,6 +190,7 @@ async def to_code(config):
     cg.add(var.set_address(config[CONF_MAC_ADDRESS].as_hex))
     cg.add(var.set_reverse_mode(config[CONF_REVERSE_MODE]))
     cg.add(var.set_command_state_timeout(config[CONF_COMMAND_STATE_TIMEOUT]))
+    cg.add(var.set_has_solar_panel(config[CONF_HAS_SOLAR_PANEL]))
 
     if CONF_BATTERY in config:
         sens = await sensor.new_sensor(config[CONF_BATTERY])
@@ -190,3 +207,7 @@ async def to_code(config):
     if CONF_CALIBRATION in config:
         sens = await binary_sensor.new_binary_sensor(config[CONF_CALIBRATION])
         cg.add(var.set_calibration_binary_sensor(sens))
+
+    if CONF_CHARGING in config:
+        sens = await binary_sensor.new_binary_sensor(config[CONF_CHARGING])
+        cg.add(var.set_charging_binary_sensor(sens))

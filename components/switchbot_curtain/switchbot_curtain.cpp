@@ -343,6 +343,12 @@ bool SwitchbotCurtain::apply_curtain_data_(bool in_motion, int raw_position, opt
   if (calibration.has_value() && this->calibration_binary_sensor_ != nullptr) {
     this->calibration_binary_sensor_->publish_state(*calibration);
   }
+  if (this->charging_binary_sensor_ != nullptr) {
+    const bool charging =
+        this->has_solar_panel_ && light_level.has_value() && *light_level > 0 &&
+        (!battery.has_value() || *battery < 100.0f);
+    this->charging_binary_sensor_->publish_state(charging);
+  }
 
   this->position = cover_position;
   this->current_position_ = cover_position;
