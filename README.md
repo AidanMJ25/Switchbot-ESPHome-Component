@@ -47,5 +47,3 @@ cover:
 - For Home Assistant device grouping, declare ESPHome `devices:` and assign `device_id` so each curtain appears as its own device instead of attaching entities to the USB-powered ESP32 hub. This part is still required in YAML; ESPHome does not provide a supported way for the external component to auto-create those sub-devices.
 - The component relies on `esp32_ble_tracker` to see advertisements for state and battery updates.
 
-
-if you see the is its working
